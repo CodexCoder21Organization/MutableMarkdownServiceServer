@@ -1,0 +1,5 @@
+{
+  "name": "MutableMarkdownServiceServer",
+  "version": "0.0.1",
+  "description": "Server implementation for the MutableMarkdown service"
+}
