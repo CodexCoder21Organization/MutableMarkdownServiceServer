@@ -1,5 +1,5 @@
-@KotlinBuildScript("https://tools.kotlin.build/")
-@file:WithArtifact("kompile:build-kotlin-jvm:0.0.1")
+@file:WithArtifact("community.kotlin.markdown:server:0.0.1")
+@file:WithArtifact("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
 @file:WithArtifact("org.jetbrains.kotlin:kotlin-test:1.9.22")
 @file:WithArtifact("org.json:json:20250517")
 package mutablemarkdownserver
