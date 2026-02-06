@@ -11,8 +11,8 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.268"),
-    MavenPrebuilt("foundation.url:protocol:0.0.146"),
+    MavenPrebuilt("foundation.url:resolver:0.0.269"),
+    MavenPrebuilt("foundation.url:protocol:0.0.154"),
     // Clock abstraction (required by UrlProtocol)
     MavenPrebuilt("community.kotlin.clocks.simple:community-kotlin-clocks-simple:0.0.1"),
     // libp2p dependencies
