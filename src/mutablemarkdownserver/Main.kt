@@ -141,7 +141,7 @@ private fun runUrlMode(bindDomain: String, rpcHandler: MarkdownRpcHandler) {
 private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
     val resolver = foundation.url.resolver.UrlResolver()
 
-    val handler = object : foundation.url.resolver.ServiceHandler {
+    val handler = object : foundation.url.protocol.ServiceHandler {
         override suspend fun handleRequest(
             path: String,
             params: Map<String, Any?>,
@@ -163,7 +163,7 @@ private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
     val registration = resolver.registerGlobalService(
         serviceUrl = "url://markdown/",
         handler = handler,
-        config = foundation.url.resolver.ServiceRegistrationConfig(
+        config = foundation.url.protocol.ServiceRegistrationConfig(
             metadata = mapOf(
                 "description" to "Mutable markdown file storage service",
                 "type" to "rpc"
