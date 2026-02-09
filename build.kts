@@ -12,7 +12,7 @@ val dependencies = resolveDependencies(
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
     MavenPrebuilt("foundation.url:resolver:0.0.293"),
-    MavenPrebuilt("foundation.url:protocol:0.0.154"),
+    MavenPrebuilt("foundation.url:protocol:0.0.165"),
     // Clock abstraction (required by UrlProtocol)
     MavenPrebuilt("community.kotlin.clocks.simple:community-kotlin-clocks-simple:0.0.1"),
     // libp2p dependencies
@@ -66,7 +66,8 @@ fun buildMaven(): File {
         //        - Support for P2P standalone mode
         // 0.0.2: Update foundation.url:resolver to 0.0.293
         // 0.0.3: Fix ServiceHandler/ServiceRegistrationConfig imports (moved to foundation.url.protocol)
-        coordinates = "community.kotlin.markdown:server:0.0.3",
+        // 0.0.4: Update foundation.url:protocol to 0.0.165 for resolver compatibility
+        coordinates = "community.kotlin.markdown:server:0.0.4",
         src = File("src"),
         compileDependencies = dependencies
     )
