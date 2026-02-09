@@ -65,7 +65,8 @@ fun buildMaven(): File {
         //        - Support for URL protocol lazy-start mode
         //        - Support for P2P standalone mode
         // 0.0.2: Update foundation.url:resolver to 0.0.293
-        coordinates = "community.kotlin.markdown:server:0.0.2",
+        // 0.0.3: Fix ServiceHandler/ServiceRegistrationConfig imports (moved to foundation.url.protocol)
+        coordinates = "community.kotlin.markdown:server:0.0.3",
         src = File("src"),
         compileDependencies = dependencies
     )
