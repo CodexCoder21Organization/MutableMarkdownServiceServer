@@ -11,7 +11,7 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.269"),
+    MavenPrebuilt("foundation.url:resolver:0.0.293"),
     MavenPrebuilt("foundation.url:protocol:0.0.154"),
     // Clock abstraction (required by UrlProtocol)
     MavenPrebuilt("community.kotlin.clocks.simple:community-kotlin-clocks-simple:0.0.1"),
@@ -64,7 +64,8 @@ fun buildMaven(): File {
         //        - MarkdownRpcHandler for RPC operations
         //        - Support for URL protocol lazy-start mode
         //        - Support for P2P standalone mode
-        coordinates = "community.kotlin.markdown:server:0.0.1",
+        // 0.0.2: Update foundation.url:resolver to 0.0.293
+        coordinates = "community.kotlin.markdown:server:0.0.2",
         src = File("src"),
         compileDependencies = dependencies
     )
