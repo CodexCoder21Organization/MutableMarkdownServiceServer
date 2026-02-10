@@ -1,6 +1,7 @@
 package mutablemarkdownserver
 
 import foundation.url.protocol.*
+import foundation.url.resolver.UrlProtocol2
 import java.io.File
 
 /**
@@ -139,7 +140,7 @@ private fun runUrlMode(bindDomain: String, rpcHandler: MarkdownRpcHandler) {
  * Run with full P2P networking for standalone mode.
  */
 private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
-    val resolver = foundation.url.resolver.UrlResolver()
+    val resolver = foundation.url.resolver.UrlResolver(UrlProtocol2())
 
     val handler = object : foundation.url.protocol.ServiceHandler {
         override suspend fun handleRequest(
