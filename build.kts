@@ -11,7 +11,7 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.293"),
+    MavenPrebuilt("foundation.url:resolver:0.0.295"),
     MavenPrebuilt("foundation.url:protocol:0.0.165"),
     // Clock abstraction (required by UrlProtocol)
     MavenPrebuilt("community.kotlin.clocks.simple:community-kotlin-clocks-simple:0.0.1"),
@@ -67,7 +67,8 @@ fun buildMaven(): File {
         // 0.0.2: Update foundation.url:resolver to 0.0.293
         // 0.0.3: Fix ServiceHandler/ServiceRegistrationConfig imports (moved to foundation.url.protocol)
         // 0.0.4: Update foundation.url:protocol to 0.0.165 for resolver compatibility
-        coordinates = "community.kotlin.markdown:server:0.0.4",
+        // 0.0.5: Update foundation.url:resolver to 0.0.295, use new UrlResolver(UrlProtocol2()) API
+        coordinates = "community.kotlin.markdown:server:0.0.5",
         src = File("src"),
         compileDependencies = dependencies
     )
