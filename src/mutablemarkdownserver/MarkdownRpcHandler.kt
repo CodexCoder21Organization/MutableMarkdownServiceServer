@@ -8,6 +8,7 @@ import java.util.*
  *
  * RPC Methods:
  *   health           -> "OK"
+ *   __bytecode_request -> Base64 JAR + class name + stdlibJar
  *   createFile       -> creates a file, returns its UUID
  *   getAllFiles      -> returns list of file metadata (id, name, lastModified)
  *   getFile          -> returns file data (id, name, content, lastModified)
@@ -20,7 +21,10 @@ import java.util.*
  *   getLastModified  -> gets file last modified timestamp
  */
 class MarkdownRpcHandler(
-    private val markdownService: MarkdownServiceImpl
+    private val markdownService: MarkdownServiceImpl,
+    private val jarBytes: ByteArray,
+    private val implClassName: String,
+    private val stdlibJarBytes: ByteArray
 ) {
 
     fun handleRequest(request: Libp2pRpcProtocol.RpcRequest): Libp2pRpcProtocol.RpcResponse {
@@ -40,6 +44,15 @@ class MarkdownRpcHandler(
     private fun dispatch(method: String, params: Map<String, Any?>): Any? {
         return when (method) {
             "health" -> "OK"
+
+            "__bytecode_request" -> {
+                println("[MarkdownServiceServer] Serving bytecode (impl: ${jarBytes.size} bytes, stdlib: ${stdlibJarBytes.size} bytes)")
+                mapOf(
+                    "jar" to Base64.getEncoder().encodeToString(jarBytes),
+                    "className" to implClassName,
+                    "stdlibJar" to Base64.getEncoder().encodeToString(stdlibJarBytes)
+                )
+            }
 
             "createFile" -> {
                 val name = requireParam(params, "name")
@@ -118,6 +131,7 @@ class MarkdownRpcHandler(
                     "description" to "Mutable markdown file storage service",
                     "availableMethods" to listOf(
                         "health: returns 'OK'",
+                        "__bytecode_request: returns client bytecode for SJVM sandbox execution",
                         "createFile(name, content?): returns {id, name, lastModified}",
                         "getAllFiles(): returns {files: [{id, name, lastModified}, ...]}",
                         "getFile(id): returns {id, name, content, lastModified}",
