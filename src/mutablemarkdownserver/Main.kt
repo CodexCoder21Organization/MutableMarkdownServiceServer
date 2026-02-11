@@ -5,6 +5,56 @@ import foundation.url.resolver.UrlProtocol2
 import java.io.File
 
 /**
+ * Loads the SJVM stdlib JAR for sandbox execution.
+ */
+private fun loadStdlibJar(): ByteArray {
+    val resourceStream = object {}.javaClass.getResourceAsStream("/stdlib.jar")
+    if (resourceStream != null) {
+        println("Loading SJVM stdlib JAR from /stdlib.jar")
+        return resourceStream.use { it.readBytes() }
+    }
+    throw IllegalStateException(
+        "Cannot find SJVM stdlib JAR at /stdlib.jar. Ensure net.javadeploy.sjvm:avianStdlibHelper-jvm is available on the classpath."
+    )
+}
+
+/**
+ * Loads the pre-compiled client JAR bytes.
+ */
+private fun loadClientJar(): ByteArray {
+    // Try classpath resource first
+    val resourceStream = object {}.javaClass.getResourceAsStream("/client-impl.jar")
+    if (resourceStream != null) {
+        println("Loading client JAR from classpath resource")
+        return resourceStream.use { it.readBytes() }
+    }
+
+    // Try environment variable
+    val envPath = System.getenv("CLIENT_JAR_PATH")
+    if (envPath != null) {
+        val file = File(envPath)
+        if (file.exists()) {
+            println("Loading client JAR from $envPath")
+            return file.readBytes()
+        }
+    }
+
+    // Try current directory
+    val localFile = File("client-impl.jar")
+    if (localFile.exists()) {
+        println("Loading client JAR from ./client-impl.jar")
+        return localFile.readBytes()
+    }
+
+    throw IllegalStateException(
+        "Cannot find client implementation JAR. Ensure client-impl.jar is available via:\n" +
+        "  - Classpath resource /client-impl.jar\n" +
+        "  - Environment variable CLIENT_JAR_PATH\n" +
+        "  - File ./client-impl.jar in current directory"
+    )
+}
+
+/**
  * url://markdown/ Service Provider
  *
  * A URL service that provides mutable markdown file storage. The server
@@ -28,6 +78,14 @@ fun main() {
     println("This service provides mutable markdown file storage.")
     println()
 
+    // Load the pre-compiled client JAR
+    val clientJarBytes = loadClientJar()
+    BytecodeGenerator.clientJarBytes = clientJarBytes
+
+    // Load the SJVM stdlib JAR for sandbox execution
+    val stdlibJarBytes = loadStdlibJar()
+    println("Loaded SJVM stdlib JAR: ${stdlibJarBytes.size} bytes")
+
     // Use environment variable or fall back to a known persistent location
     val dataDir = System.getenv("MARKDOWN_SERVICE_DATA_DIR")?.let { File(it) }
         ?: File("/root/markdown-service-data")
@@ -39,7 +97,13 @@ fun main() {
     }
 
     val markdownService = MarkdownServiceImpl(dataDir)
-    val rpcHandler = MarkdownRpcHandler(markdownService)
+
+    val implementationJar = BytecodeGenerator.generateImplementationJar()
+    val implementationClassName = BytecodeGenerator.getImplementationClassName()
+    println("Generated implementation JAR: ${implementationJar.size} bytes")
+    println("Implementation class: $implementationClassName")
+
+    val rpcHandler = MarkdownRpcHandler(markdownService, implementationJar, implementationClassName, stdlibJarBytes)
 
     // Check for HTTP mode first (simplest for CLI access)
     val httpPort = System.getenv("HTTP_PORT")?.toIntOrNull()
@@ -60,10 +124,10 @@ fun main() {
 
     if (bindDomain != null) {
         println("Running in lazy-start mode with URL_BIND_DOMAIN=$bindDomain")
-        runUrlMode(bindDomain, rpcHandler)
+        runUrlMode(bindDomain, rpcHandler, implementationJar, implementationClassName, stdlibJarBytes)
     } else {
         println("Running in standalone P2P mode")
-        runP2pMode(rpcHandler)
+        runP2pMode(rpcHandler, implementationJar, implementationClassName, stdlibJarBytes)
     }
 }
 
@@ -103,7 +167,13 @@ private fun runHttpMode(port: Int, rpcHandler: MarkdownRpcHandler) {
 /**
  * Run with URL protocol for lazy-start containers.
  */
-private fun runUrlMode(bindDomain: String, rpcHandler: MarkdownRpcHandler) {
+private fun runUrlMode(
+    bindDomain: String,
+    rpcHandler: MarkdownRpcHandler,
+    jarBytes: ByteArray,
+    implClassName: String,
+    stdlibJarBytes: ByteArray
+) {
     val protocol = UrlProtocol()
 
     val handler: suspend (Libp2pRpcProtocol.RpcRequest, EffectPropagator) -> Libp2pRpcProtocol.RpcResponse = { request, _ ->
@@ -120,8 +190,8 @@ private fun runUrlMode(bindDomain: String, rpcHandler: MarkdownRpcHandler) {
     println("  Service identifier: ${binding.serviceIdentifier}")
     println("  Active: ${binding.isActive}")
     println()
-    println("RPC methods available: health, createFile, getAllFiles, getFile, getFileByName,")
-    println("  deleteFile, setName, getName, setContent, getContent, getLastModified")
+    println("RPC methods available: health, __bytecode_request, createFile, getAllFiles, getFile,")
+    println("  getFileByName, deleteFile, setName, getName, setContent, getContent, getLastModified")
     println()
     println("Press Ctrl+C to stop.")
 
@@ -139,7 +209,12 @@ private fun runUrlMode(bindDomain: String, rpcHandler: MarkdownRpcHandler) {
 /**
  * Run with full P2P networking for standalone mode.
  */
-private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
+private fun runP2pMode(
+    rpcHandler: MarkdownRpcHandler,
+    jarBytes: ByteArray,
+    implClassName: String,
+    stdlibJarBytes: ByteArray
+) {
     val resolver = foundation.url.resolver.UrlResolver(UrlProtocol2())
 
     val handler = object : foundation.url.protocol.ServiceHandler {
@@ -152,8 +227,8 @@ private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
             return rpcHandler.handleP2pRequest(path, params)
         }
 
-        override fun getImplementationJar(): ByteArray = ByteArray(0)
-        override fun getImplementationClassName(): String = ""
+        override fun getImplementationJar(): ByteArray = jarBytes
+        override fun getImplementationClassName(): String = implClassName
 
         override fun onShutdown() {
             println("[MarkdownServiceServer] P2P service shutting down")
@@ -179,8 +254,8 @@ private fun runP2pMode(rpcHandler: MarkdownRpcHandler) {
     println("  Multiaddresses: ${registration.multiaddresses.joinToString(", ")}")
     println("  Service URL: url://markdown/")
     println()
-    println("RPC methods available: health, createFile, getAllFiles, getFile, getFileByName,")
-    println("  deleteFile, setName, getName, setContent, getContent, getLastModified")
+    println("RPC methods available: health, __bytecode_request, createFile, getAllFiles, getFile,")
+    println("  getFileByName, deleteFile, setName, getName, setContent, getContent, getLastModified")
     println()
     println("Press Ctrl+C to stop.")
 

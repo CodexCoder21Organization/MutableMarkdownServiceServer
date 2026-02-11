@@ -13,6 +13,8 @@ val dependencies = resolveDependencies(
     // UrlResolver and UrlProtocol
     MavenPrebuilt("foundation.url:resolver:0.0.297"),
     MavenPrebuilt("foundation.url:protocol:0.0.218"),
+    // SJVM for stdlib JAR (needed for bytecode responses)
+    MavenPrebuilt("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24"),
     // Clock abstraction (required by UrlProtocol)
     MavenPrebuilt("community.kotlin.clocks.simple:community-kotlin-clocks-simple:0.0.1"),
     // libp2p dependencies
@@ -69,7 +71,12 @@ fun buildMaven(): File {
         // 0.0.4: Update foundation.url:protocol to 0.0.165 for resolver compatibility
         // 0.0.5: Update foundation.url:resolver to 0.0.295, use new UrlResolver(UrlProtocol2()) API
         // 0.0.6: Update foundation.url:resolver to 0.0.297, foundation.url:protocol to 0.0.218
-        coordinates = "community.kotlin.markdown:server:0.0.6",
+        // 0.0.7: Add SJVM client library for sandboxed execution
+        //        - Pre-compiled client JAR with MarkdownServiceClientImpl
+        //        - MarkdownFileImpl with RPC-backed mutable properties
+        //        - BytecodeGenerator for serving client bytecode
+        //        - __bytecode_request RPC method with stdlibJar support
+        coordinates = "community.kotlin.markdown:server:0.0.7",
         src = File("src"),
         compileDependencies = dependencies
     )
@@ -79,7 +86,56 @@ fun buildSkinnyJar(): File {
     return buildMaven().jar
 }
 
+// Client code dependencies - implements interfaces from MarkdownApi
+val clientDependencies = resolveDependencies(
+    MavenPrebuilt("org.jetbrains.kotlin:kotlin-stdlib:1.9.22"),
+    MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
+    MavenPrebuilt("foundation.url:service-bridge-stub:0.0.1"),
+)
+
+/**
+ * Build the client JAR for SJVM execution.
+ */
+fun buildClientJar(): File {
+    val artifact = buildSimpleKotlinMavenArtifact(
+        // 0.0.1: Initial release
+        //        - MarkdownServiceClientImpl for RPC calls
+        //        - MarkdownFileImpl with RPC-backed mutable properties
+        coordinates = "community.kotlin.markdown:server-client:0.0.1",
+        src = File("src-client"),
+        compileDependencies = clientDependencies
+    )
+    return artifact.jar
+}
+
+/**
+ * Build a FAT client JAR that includes all dependencies.
+ */
+fun buildClientFatJar(): File {
+    val skinnyJar = buildClientJar()
+    return BuildJar(null, clientDependencies.map { it.jar } + skinnyJar)
+}
+
+/**
+ * Creates a JAR containing the client FAT JAR as a resource entry /client-impl.jar.
+ */
+fun buildClientResourcesJar(): File {
+    val clientFatJar = buildClientFatJar()
+    val tempFile = java.io.File.createTempFile("client-resources", ".jar")
+    java.util.jar.JarOutputStream(tempFile.outputStream()).use { jos ->
+        val entry = java.util.jar.JarEntry("client-impl.jar")
+        jos.putNextEntry(entry)
+        jos.write(clientFatJar.readBytes())
+        jos.closeEntry()
+    }
+    return tempFile
+}
+
+/**
+ * Build fat JAR with client included.
+ */
 fun buildFatJar(): File {
     val manifest = Manifest("mutablemarkdownserver.MainKt")
-    return BuildJar(manifest, dependencies.map { it.jar } + buildSkinnyJar())
+    val clientResourcesJar = buildClientResourcesJar()
+    return BuildJar(manifest, dependencies.map { it.jar } + buildSkinnyJar() + clientResourcesJar)
 }
