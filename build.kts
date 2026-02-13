@@ -11,8 +11,10 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.297"),
-    MavenPrebuilt("foundation.url:protocol:0.0.218"),
+    // 0.0.328: Updated UrlProtocol to 0.0.234
+    MavenPrebuilt("foundation.url:resolver:0.0.328"),
+    // 0.0.234: Latest UrlProtocol
+    MavenPrebuilt("foundation.url:protocol:0.0.234"),
     // SJVM for stdlib JAR (needed for bytecode responses)
     MavenPrebuilt("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24"),
     // Clock abstraction (required by UrlProtocol)
@@ -71,12 +73,13 @@ fun buildMaven(): File {
         // 0.0.4: Update foundation.url:protocol to 0.0.165 for resolver compatibility
         // 0.0.5: Update foundation.url:resolver to 0.0.295, use new UrlResolver(UrlProtocol2()) API
         // 0.0.6: Update foundation.url:resolver to 0.0.297, foundation.url:protocol to 0.0.218
+        // 0.0.8: Update UrlResolver to 0.0.328, UrlProtocol to 0.0.234
         // 0.0.7: Add SJVM client library for sandboxed execution
         //        - Pre-compiled client JAR with MarkdownServiceClientImpl
         //        - MarkdownFileImpl with RPC-backed mutable properties
         //        - BytecodeGenerator for serving client bytecode
         //        - __bytecode_request RPC method with stdlibJar support
-        coordinates = "community.kotlin.markdown:server:0.0.7",
+        coordinates = "community.kotlin.markdown:server:0.0.8",
         src = File("src"),
         compileDependencies = dependencies
     )
