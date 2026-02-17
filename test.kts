@@ -1,7 +1,7 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.295")
-@file:WithArtifact("foundation.url:protocol:0.0.116")
+@file:WithArtifact("foundation.url:resolver:0.0.349")
+@file:WithArtifact("foundation.url:protocol:0.0.251")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
 @file:WithArtifact("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24")
@@ -24,6 +24,7 @@ import foundation.url.protocol.ServiceRegistrationConfig
 fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Unit) {
     val tempDir = java.io.File(System.getProperty("java.io.tmpdir"), "markdown-e2e-${java.util.UUID.randomUUID()}")
     tempDir.mkdirs()
+    val testServiceId = "markdown-test-${java.util.UUID.randomUUID()}"
     var serverResolver: UrlResolver? = null
     var clientResolver: UrlResolver? = null
     try {
@@ -54,7 +55,7 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         }
 
         val registration = serverResolver.registerGlobalService(
-            serviceUrl = "url://markdown/",
+            serviceUrl = "url://$testServiceId/",
             handler = handler,
             config = ServiceRegistrationConfig(
                 metadata = mapOf("type" to "rpc"),
@@ -69,12 +70,12 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         val bootstrapPeer = Libp2pPeer.remote(
             peerId = registration.peerId,
             multiaddresses = serverMultiaddrs,
-            advertisedServices = listOf("markdown")
+            advertisedServices = listOf(testServiceId)
         )
 
         clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
         val connection = clientResolver.openSandboxedConnection(
-            "url://markdown/",
+            "url://$testServiceId/",
             community.kotlin.markdown.api.MarkdownService::class
         )
         val proxy = connection.proxy
