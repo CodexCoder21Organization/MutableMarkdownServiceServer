@@ -50,6 +50,18 @@ URL_BIND_DOMAIN="markdown.example.com:${PORT}" java -jar mutable-markdown-server
 MARKDOWN_SERVICE_DATA_DIR=/tmp/markdown-data java -jar mutable-markdown-server.jar
 ```
 
+## Path-Based File Access
+
+Files can be requested directly by name as a URL path. For example, requesting `url://markdown/baby-sleep.md` will look up the file named `baby-sleep.md` and return its data (id, name, content, lastModified).
+
+This enables typed URL protocol access:
+```
+url://markdown/baby-sleep.md  →  returns MarkdownFile data for "baby-sleep.md"
+url://markdown/notes.md       →  returns MarkdownFile data for "notes.md"
+```
+
+If no file with the given name exists, the server returns service metadata listing available RPC methods. Named RPC methods (e.g., `health`, `getAllFiles`) always take precedence over file name lookups.
+
 ## RPC Methods
 
 | Method | Parameters | Returns | Description |
@@ -65,6 +77,7 @@ MARKDOWN_SERVICE_DATA_DIR=/tmp/markdown-data java -jar mutable-markdown-server.j
 | `setContent` | `id`, `content` | `{ok: true}` | Update file content |
 | `getContent` | `id` | `{content}` | Get file content |
 | `getLastModified` | `id` | `{lastModified}` | Get modification timestamp |
+| `<filename>` | none | file data or service metadata | Get file by path name |
 
 ## Data Storage
 

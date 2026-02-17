@@ -125,25 +125,33 @@ class MarkdownRpcHandler(
             }
 
             else -> {
-                mapOf(
-                    "service" to "url://markdown/",
-                    "type" to "rpc",
-                    "description" to "Mutable markdown file storage service",
-                    "availableMethods" to listOf(
-                        "health: returns 'OK'",
-                        "__bytecode_request: returns client bytecode for SJVM sandbox execution",
-                        "createFile(name, content?): returns {id, name, lastModified}",
-                        "getAllFiles(): returns {files: [{id, name, lastModified}, ...]}",
-                        "getFile(id): returns {id, name, content, lastModified}",
-                        "getFileByName(name): returns file or {found: false}",
-                        "deleteFile(id): returns {deleted: true}",
-                        "setName(id, name): returns {ok: true}",
-                        "getName(id): returns {name}",
-                        "setContent(id, content): returns {ok: true}",
-                        "getContent(id): returns {content}",
-                        "getLastModified(id): returns {lastModified}"
+                // Try to look up as a file by name (supports url://markdown/baby-sleep.md style requests)
+                val fileByName = markdownService.getFileByName(method)
+                if (fileByName != null) {
+                    println("[MarkdownServiceServer] Resolved path '$method' to file ${fileByName.id}")
+                    fileToMap(fileByName)
+                } else {
+                    mapOf(
+                        "service" to "url://markdown/",
+                        "type" to "rpc",
+                        "description" to "Mutable markdown file storage service",
+                        "availableMethods" to listOf(
+                            "health: returns 'OK'",
+                            "__bytecode_request: returns client bytecode for SJVM sandbox execution",
+                            "createFile(name, content?): returns {id, name, lastModified}",
+                            "getAllFiles(): returns {files: [{id, name, lastModified}, ...]}",
+                            "getFile(id): returns {id, name, content, lastModified}",
+                            "getFileByName(name): returns file or {found: false}",
+                            "deleteFile(id): returns {deleted: true}",
+                            "setName(id, name): returns {ok: true}",
+                            "getName(id): returns {name}",
+                            "setContent(id, content): returns {ok: true}",
+                            "getContent(id): returns {content}",
+                            "getLastModified(id): returns {lastModified}",
+                            "<filename>: returns file data if a file with that name exists"
+                        )
                     )
-                )
+                }
             }
         }
     }
