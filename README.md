@@ -62,11 +62,10 @@ Use `openSandboxedConnection` with a path-based URL to get a typed `MarkdownFile
 import foundation.url.resolver.UrlResolver
 
 val resolver = UrlResolver()
-val connection = resolver.openSandboxedConnection(
+val file: MarkdownFile = resolver.openSandboxedConnection(
     "url://markdown/baby-sleep.md",
     MarkdownFile::class
 )
-val file = connection.proxy
 
 println(file.name)       // "baby-sleep.md"
 println(file.content)    // "# Baby Sleep Tips\n\nSome content here."

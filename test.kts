@@ -1,6 +1,6 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.355")
+@file:WithArtifact("foundation.url:resolver:0.0.356")
 @file:WithArtifact("foundation.url:protocol:0.0.252")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
@@ -73,11 +73,10 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         )
 
         clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
-        val connection = clientResolver.openSandboxedConnection(
+        val proxy: community.kotlin.markdown.api.MarkdownService = clientResolver.openSandboxedConnection(
             "url://markdown/",
             community.kotlin.markdown.api.MarkdownService::class
         )
-        val proxy = connection.proxy
 
         block(proxy)
 
@@ -147,11 +146,10 @@ fun testPathBasedFileLookupViaSjvm() {
         )
 
         clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
-        val connection = clientResolver.openSandboxedConnection(
+        val file: community.kotlin.markdown.api.MarkdownFile = clientResolver.openSandboxedConnection(
             "url://markdown/baby-sleep.md",
             community.kotlin.markdown.api.MarkdownFile::class
         )
-        val file = connection.proxy
 
         assertEquals("baby-sleep.md", file.name, "File name should be 'baby-sleep.md'")
         assertEquals("# Baby Sleep Tips\n\nSome content here.", file.content, "File content should match")
