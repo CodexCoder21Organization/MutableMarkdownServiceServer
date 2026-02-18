@@ -1,7 +1,7 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.352")
-@file:WithArtifact("foundation.url:protocol:0.0.251")
+@file:WithArtifact("foundation.url:resolver:0.0.354")
+@file:WithArtifact("foundation.url:protocol:0.0.252")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
 @file:WithArtifact("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24")
@@ -44,7 +44,7 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params, metadata)
+                return rpcHandler.handleP2pRequest(path, params)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName
@@ -113,12 +113,17 @@ fun testPathBasedFileLookupViaSjvm() {
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params, metadata)
+                return rpcHandler.handleP2pRequest(path, params)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName
             override fun getStdlibJar(): ByteArray? = stdlibJarBytes
             override fun supportsSandboxedExecution(): Boolean = true
+            override fun resolveInitParams(resourcePath: String?): Map<String, String>? {
+                if (resourcePath == null) return null
+                val file = service.getFileByName(resourcePath) ?: return null
+                return mapOf("id" to file.id.toString())
+            }
             override fun onShutdown() {}
         }
 
