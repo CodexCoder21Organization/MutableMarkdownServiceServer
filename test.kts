@@ -1,6 +1,6 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.351")
+@file:WithArtifact("foundation.url:resolver:0.0.352")
 @file:WithArtifact("foundation.url:protocol:0.0.251")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
@@ -44,7 +44,7 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params)
+                return rpcHandler.handleP2pRequest(path, params, metadata)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName
@@ -113,7 +113,7 @@ fun testPathBasedFileLookupViaSjvm() {
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params)
+                return rpcHandler.handleP2pRequest(path, params, metadata)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName

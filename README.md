@@ -52,15 +52,32 @@ MARKDOWN_SERVICE_DATA_DIR=/tmp/markdown-data java -jar mutable-markdown-server.j
 
 ## Path-Based File Access
 
-Files can be requested directly by name as a URL path. For example, requesting `url://markdown/baby-sleep.md` will look up the file named `baby-sleep.md` and return its data (id, name, content, lastModified).
+Files can be accessed directly by name through the URL path. This works with both raw RPC requests and sandboxed connections.
 
-This enables typed URL protocol access:
-```
-url://markdown/baby-sleep.md  →  returns MarkdownFile data for "baby-sleep.md"
-url://markdown/notes.md       →  returns MarkdownFile data for "notes.md"
+### Sandboxed Connection (Recommended)
+
+Use `openSandboxedConnection` with a path-based URL to get a typed `MarkdownFile` proxy:
+
+```kotlin
+import foundation.url.resolver.UrlResolver
+
+val resolver = UrlResolver()
+val connection = resolver.openSandboxedConnection(
+    "url://markdown/baby-sleep.md",
+    MarkdownFile::class
+)
+val file = connection.proxy
+
+println(file.name)       // "baby-sleep.md"
+println(file.content)    // "# Baby Sleep Tips\n\nSome content here."
+file.content = "# Updated Content"  // Mutates the file on the server
 ```
 
-If no file with the given name exists, the server returns service metadata listing available RPC methods. Named RPC methods (e.g., `health`, `getAllFiles`) always take precedence over file name lookups.
+The SJVM sandbox executes the client implementation locally, routing RPC calls through the persistent P2P connection. The server automatically resolves the resource path ("baby-sleep.md") and injects the file ID into each RPC call.
+
+### Raw RPC
+
+Path-based URLs also work with raw RPC. Requesting `url://markdown/baby-sleep.md` as a path will return the file data (id, name, content, lastModified). Named RPC methods (e.g., `health`, `getAllFiles`) always take precedence over file name lookups.
 
 ## RPC Methods
 
@@ -76,6 +93,7 @@ If no file with the given name exists, the server returns service metadata listi
 | `getName` | `id` | `{name}` | Get file name |
 | `setContent` | `id`, `content` | `{ok: true}` | Update file content |
 | `getContent` | `id` | `{content}` | Get file content |
+| `getId` | `id` | `{id}` | Echo file UUID (used by path-based connections) |
 | `getLastModified` | `id` | `{lastModified}` | Get modification timestamp |
 | `<filename>` | none | file data or service metadata | Get file by path name |
 
@@ -103,7 +121,7 @@ Each file contains:
 ## Maven Coordinates
 
 ```
-community.kotlin.markdown:server:0.0.1
+community.kotlin.markdown:server:0.0.12
 ```
 
 ## Related Projects

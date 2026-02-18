@@ -11,7 +11,7 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.351"),
+    MavenPrebuilt("foundation.url:resolver:0.0.352"),
     MavenPrebuilt("foundation.url:protocol:0.0.251"),
     // SJVM for stdlib JAR (needed for bytecode responses)
     MavenPrebuilt("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24"),
@@ -71,7 +71,7 @@ fun buildMaven(): File {
         // 0.0.4: Update foundation.url:protocol to 0.0.165 for resolver compatibility
         // 0.0.5: Update foundation.url:resolver to 0.0.295, use new UrlResolver(UrlProtocol2()) API
         // 0.0.6: Update foundation.url:resolver to 0.0.297, foundation.url:protocol to 0.0.218
-        // 0.0.12: Upgrade UrlResolver to 0.0.351
+        // 0.0.12: Upgrade UrlResolver to 0.0.352
         //         - Path-based sandboxed connections: url://markdown/baby-sleep.md now
         //           correctly routes RPC calls with resource path context
         //         - Added MarkdownFile interface methods to client impl for SJVM proxy
