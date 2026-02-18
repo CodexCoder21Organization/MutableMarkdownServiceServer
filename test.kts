@@ -1,6 +1,6 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.354")
+@file:WithArtifact("foundation.url:resolver:0.0.355")
 @file:WithArtifact("foundation.url:protocol:0.0.252")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
