@@ -38,6 +38,21 @@ class MarkdownRpcHandler(
     }
 
     fun handleP2pRequest(path: String, params: Map<String, Any?>): Any? {
+        // Support path-prefixed methods for path-based connections (e.g., "baby-sleep.md/getName").
+        // When a client opens url://markdown/baby-sleep.md, subsequent RPC calls arrive with
+        // the file path prepended to the method name. We resolve the file by name and inject
+        // its id into the params so the method handler can operate on the correct file.
+        val slashIndex = path.indexOf('/')
+        if (slashIndex > 0) {
+            val filePath = path.substring(0, slashIndex)
+            val method = path.substring(slashIndex + 1)
+            val file = markdownService.getFileByName(filePath)
+            if (file != null) {
+                val augmentedParams = params.toMutableMap()
+                augmentedParams["id"] = file.id.toString()
+                return dispatch(method, augmentedParams)
+            }
+        }
         return dispatch(path, params)
     }
 
@@ -117,6 +132,11 @@ class MarkdownRpcHandler(
             "getContent" -> {
                 val id = UUID.fromString(requireParam(params, "id"))
                 mapOf("content" to markdownService.getFile(id).content)
+            }
+
+            "getId" -> {
+                val id = requireParam(params, "id")
+                mapOf("id" to id)
             }
 
             "getLastModified" -> {

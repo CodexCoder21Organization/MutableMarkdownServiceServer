@@ -1,6 +1,6 @@
 @file:WithArtifact("mutablemarkdownserver.buildFatJar()")
 @file:WithArtifact("community.kotlin.markdown:api:0.0.1")
-@file:WithArtifact("foundation.url:resolver:0.0.349")
+@file:WithArtifact("foundation.url:resolver:0.0.351")
 @file:WithArtifact("foundation.url:protocol:0.0.251")
 @file:WithArtifact("community.kotlin.rpc:protocol-api:0.0.2")
 @file:WithArtifact("community.kotlin.rpc:protocol-impl:0.0.11")
@@ -80,6 +80,78 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         val proxy = connection.proxy
 
         block(proxy)
+
+        registration.unregister()
+    } finally {
+        clientResolver?.close()
+        serverResolver?.close()
+        tempDir.deleteRecursively()
+    }
+}
+
+fun testPathBasedFileLookupViaSjvm() {
+    val tempDir = java.io.File(System.getProperty("java.io.tmpdir"), "markdown-e2e-${java.util.UUID.randomUUID()}")
+    tempDir.mkdirs()
+    var serverResolver: UrlResolver? = null
+    var clientResolver: UrlResolver? = null
+    try {
+        serverResolver = UrlResolver(UrlProtocol2(bootstrapPeers = emptyList()))
+        val service = mutablemarkdownserver.MarkdownServiceImpl(tempDir)
+        service.createFile("baby-sleep.md", "# Baby Sleep Tips\n\nSome content here.")
+
+        val clientJarBytes = object {}.javaClass.getResourceAsStream("/client-impl.jar")?.readBytes() ?: ByteArray(0)
+        val stdlibJarBytes = object {}.javaClass.getResourceAsStream("/stdlib.jar")?.readBytes()
+
+        val implClassName = mutablemarkdownserver.BytecodeGenerator.getImplementationClassName()
+        val rpcHandler = mutablemarkdownserver.MarkdownRpcHandler(
+            service, clientJarBytes, implClassName, stdlibJarBytes ?: ByteArray(0)
+        )
+
+        val handler = object : ServiceHandler {
+            override suspend fun handleRequest(
+                path: String,
+                params: Map<String, Any?>,
+                metadata: Map<String, String>
+            ): Any? {
+                return rpcHandler.handleP2pRequest(path, params)
+            }
+            override fun getImplementationJar(): ByteArray = clientJarBytes
+            override fun getImplementationClassName(): String = implClassName
+            override fun getStdlibJar(): ByteArray? = stdlibJarBytes
+            override fun supportsSandboxedExecution(): Boolean = true
+            override fun onShutdown() {}
+        }
+
+        val registration = serverResolver.registerGlobalService(
+            serviceUrl = "url://markdown/",
+            handler = handler,
+            config = ServiceRegistrationConfig(
+                metadata = mapOf("type" to "rpc"),
+                reannounceIntervalMs = 60000
+            )
+        )
+
+        val serverMultiaddrs = registration.multiaddresses.map { addr ->
+            addr.replace(Regex("/ip4/[0-9.]+/"), "/ip4/127.0.0.1/")
+        }
+
+        val bootstrapPeer = Libp2pPeer.remote(
+            peerId = registration.peerId,
+            multiaddresses = serverMultiaddrs,
+            advertisedServices = listOf("markdown")
+        )
+
+        clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
+        val connection = clientResolver.openSandboxedConnection(
+            "url://markdown/baby-sleep.md",
+            community.kotlin.markdown.api.MarkdownFile::class
+        )
+        val file = connection.proxy
+
+        assertEquals("baby-sleep.md", file.name, "File name should be 'baby-sleep.md'")
+        assertEquals("# Baby Sleep Tips\n\nSome content here.", file.content, "File content should match")
+
+        println("[E2E] Path-based file lookup via SJVM passed")
 
         registration.unregister()
     } finally {

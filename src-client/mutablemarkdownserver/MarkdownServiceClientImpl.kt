@@ -58,4 +58,36 @@ class MarkdownServiceClientImpl {
     fun deleteFile(file: MarkdownFile) {
         ServiceBridge.rpc("deleteFile", mapOf("id" to file.id.toString()))
     }
+
+    // MarkdownFile interface methods for path-based lookup (url://markdown/baby-sleep.md).
+    // When opened via a path-based URL, the server resolves the file from the URL path
+    // and injects the file id into params before dispatching.
+
+    fun getId(): UUID {
+        val result = ServiceBridge.rpc("getId", emptyMap<String, Any>())
+        return UUID.fromString(result["id"].toString())
+    }
+
+    fun getName(): String {
+        val result = ServiceBridge.rpc("getName", emptyMap<String, Any>())
+        return result["name"].toString()
+    }
+
+    fun setName(value: String) {
+        ServiceBridge.rpc("setName", mapOf("name" to value))
+    }
+
+    fun getContent(): String {
+        val result = ServiceBridge.rpc("getContent", emptyMap<String, Any>())
+        return result["content"].toString()
+    }
+
+    fun setContent(value: String) {
+        ServiceBridge.rpc("setContent", mapOf("content" to value))
+    }
+
+    fun getLastModified(): Long {
+        val result = ServiceBridge.rpc("getLastModified", emptyMap<String, Any>())
+        return (result["lastModified"] as Number).toLong()
+    }
 }
