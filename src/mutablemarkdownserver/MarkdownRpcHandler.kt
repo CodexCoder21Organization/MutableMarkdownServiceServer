@@ -37,7 +37,21 @@ class MarkdownRpcHandler(
         }
     }
 
-    fun handleP2pRequest(path: String, params: Map<String, Any?>): Any? {
+    fun handleP2pRequest(path: String, params: Map<String, Any?>, metadata: Map<String, String> = emptyMap()): Any? {
+        // Support path-based connections (e.g., url://markdown/baby-sleep.md).
+        // When a client opens a path-based URL, the resolver sends the resource path
+        // as a separate "resourcePath" metadata field on each RPC request. We resolve
+        // the file by name and inject its id into the params so the method handler
+        // can operate on the correct file.
+        val resourcePath = metadata["resourcePath"]
+        if (resourcePath != null) {
+            val file = markdownService.getFileByName(resourcePath)
+            if (file != null) {
+                val augmentedParams = params.toMutableMap()
+                augmentedParams["id"] = file.id.toString()
+                return dispatch(path, augmentedParams)
+            }
+        }
         return dispatch(path, params)
     }
 
@@ -119,31 +133,44 @@ class MarkdownRpcHandler(
                 mapOf("content" to markdownService.getFile(id).content)
             }
 
+            "getId" -> {
+                val id = requireParam(params, "id")
+                mapOf("id" to id)
+            }
+
             "getLastModified" -> {
                 val id = UUID.fromString(requireParam(params, "id"))
                 mapOf("lastModified" to markdownService.getFile(id).lastModified)
             }
 
             else -> {
-                mapOf(
-                    "service" to "url://markdown/",
-                    "type" to "rpc",
-                    "description" to "Mutable markdown file storage service",
-                    "availableMethods" to listOf(
-                        "health: returns 'OK'",
-                        "__bytecode_request: returns client bytecode for SJVM sandbox execution",
-                        "createFile(name, content?): returns {id, name, lastModified}",
-                        "getAllFiles(): returns {files: [{id, name, lastModified}, ...]}",
-                        "getFile(id): returns {id, name, content, lastModified}",
-                        "getFileByName(name): returns file or {found: false}",
-                        "deleteFile(id): returns {deleted: true}",
-                        "setName(id, name): returns {ok: true}",
-                        "getName(id): returns {name}",
-                        "setContent(id, content): returns {ok: true}",
-                        "getContent(id): returns {content}",
-                        "getLastModified(id): returns {lastModified}"
+                // Try to look up as a file by name (supports url://markdown/baby-sleep.md style requests)
+                val fileByName = markdownService.getFileByName(method)
+                if (fileByName != null) {
+                    println("[MarkdownServiceServer] Resolved path '$method' to file ${fileByName.id}")
+                    fileToMap(fileByName)
+                } else {
+                    mapOf(
+                        "service" to "url://markdown/",
+                        "type" to "rpc",
+                        "description" to "Mutable markdown file storage service",
+                        "availableMethods" to listOf(
+                            "health: returns 'OK'",
+                            "__bytecode_request: returns client bytecode for SJVM sandbox execution",
+                            "createFile(name, content?): returns {id, name, lastModified}",
+                            "getAllFiles(): returns {files: [{id, name, lastModified}, ...]}",
+                            "getFile(id): returns {id, name, content, lastModified}",
+                            "getFileByName(name): returns file or {found: false}",
+                            "deleteFile(id): returns {deleted: true}",
+                            "setName(id, name): returns {ok: true}",
+                            "getName(id): returns {name}",
+                            "setContent(id, content): returns {ok: true}",
+                            "getContent(id): returns {content}",
+                            "getLastModified(id): returns {lastModified}",
+                            "<filename>: returns file data if a file with that name exists"
+                        )
                     )
-                )
+                }
             }
         }
     }

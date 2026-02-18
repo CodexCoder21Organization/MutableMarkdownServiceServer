@@ -50,6 +50,35 @@ URL_BIND_DOMAIN="markdown.example.com:${PORT}" java -jar mutable-markdown-server
 MARKDOWN_SERVICE_DATA_DIR=/tmp/markdown-data java -jar mutable-markdown-server.jar
 ```
 
+## Path-Based File Access
+
+Files can be accessed directly by name through the URL path. This works with both raw RPC requests and sandboxed connections.
+
+### Sandboxed Connection (Recommended)
+
+Use `openSandboxedConnection` with a path-based URL to get a typed `MarkdownFile` proxy:
+
+```kotlin
+import foundation.url.resolver.UrlResolver
+
+val resolver = UrlResolver()
+val connection = resolver.openSandboxedConnection(
+    "url://markdown/baby-sleep.md",
+    MarkdownFile::class
+)
+val file = connection.proxy
+
+println(file.name)       // "baby-sleep.md"
+println(file.content)    // "# Baby Sleep Tips\n\nSome content here."
+file.content = "# Updated Content"  // Mutates the file on the server
+```
+
+The SJVM sandbox executes the client implementation locally, routing RPC calls through the persistent P2P connection. The server automatically resolves the resource path ("baby-sleep.md") and injects the file ID into each RPC call.
+
+### Raw RPC
+
+Path-based URLs also work with raw RPC. Requesting `url://markdown/baby-sleep.md` as a path will return the file data (id, name, content, lastModified). Named RPC methods (e.g., `health`, `getAllFiles`) always take precedence over file name lookups.
+
 ## RPC Methods
 
 | Method | Parameters | Returns | Description |
@@ -64,7 +93,9 @@ MARKDOWN_SERVICE_DATA_DIR=/tmp/markdown-data java -jar mutable-markdown-server.j
 | `getName` | `id` | `{name}` | Get file name |
 | `setContent` | `id`, `content` | `{ok: true}` | Update file content |
 | `getContent` | `id` | `{content}` | Get file content |
+| `getId` | `id` | `{id}` | Echo file UUID (used by path-based connections) |
 | `getLastModified` | `id` | `{lastModified}` | Get modification timestamp |
+| `<filename>` | none | file data or service metadata | Get file by path name |
 
 ## Data Storage
 
@@ -90,7 +121,7 @@ Each file contains:
 ## Maven Coordinates
 
 ```
-community.kotlin.markdown:server:0.0.1
+community.kotlin.markdown:server:0.0.12
 ```
 
 ## Related Projects
