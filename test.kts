@@ -24,11 +24,10 @@ import foundation.url.protocol.ServiceRegistrationConfig
 fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Unit) {
     val tempDir = java.io.File(System.getProperty("java.io.tmpdir"), "markdown-e2e-${java.util.UUID.randomUUID()}")
     tempDir.mkdirs()
-    val testServiceId = "markdown-test-${java.util.UUID.randomUUID()}"
     var serverResolver: UrlResolver? = null
     var clientResolver: UrlResolver? = null
     try {
-        serverResolver = UrlResolver(UrlProtocol2())
+        serverResolver = UrlResolver(UrlProtocol2(bootstrapPeers = emptyList()))
         val service = mutablemarkdownserver.MarkdownServiceImpl(tempDir)
 
         val clientJarBytes = object {}.javaClass.getResourceAsStream("/client-impl.jar")?.readBytes() ?: ByteArray(0)
@@ -55,7 +54,7 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         }
 
         val registration = serverResolver.registerGlobalService(
-            serviceUrl = "url://$testServiceId/",
+            serviceUrl = "url://markdown/",
             handler = handler,
             config = ServiceRegistrationConfig(
                 metadata = mapOf("type" to "rpc"),
@@ -70,12 +69,12 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
         val bootstrapPeer = Libp2pPeer.remote(
             peerId = registration.peerId,
             multiaddresses = serverMultiaddrs,
-            advertisedServices = listOf(testServiceId)
+            advertisedServices = listOf("markdown")
         )
 
         clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
         val connection = clientResolver.openSandboxedConnection(
-            "url://$testServiceId/",
+            "url://markdown/",
             community.kotlin.markdown.api.MarkdownService::class
         )
         val proxy = connection.proxy
