@@ -11,8 +11,8 @@ val dependencies = resolveDependencies(
     // Markdown API interfaces
     MavenPrebuilt("community.kotlin.markdown:api:0.0.1"),
     // UrlResolver and UrlProtocol
-    MavenPrebuilt("foundation.url:resolver:0.0.356"),
-    MavenPrebuilt("foundation.url:protocol:0.0.252"),
+    MavenPrebuilt("foundation.url:resolver:0.0.362"),
+    MavenPrebuilt("foundation.url:protocol:0.0.255"),
     // SJVM for stdlib JAR (needed for bytecode responses)
     MavenPrebuilt("net.javadeploy.sjvm:avianStdlibHelper-jvm:0.0.24"),
     // Clock abstraction (required by UrlProtocol)
