@@ -224,7 +224,7 @@ private fun runP2pMode(
             metadata: Map<String, String>
         ): Any? {
             println("[MarkdownServiceServer] P2P request: path='$path', params=$params")
-            return rpcHandler.handleP2pRequest(path, params)
+            return rpcHandler.handleP2pRequest(path, params, metadata)
         }
 
         override fun getImplementationJar(): ByteArray = jarBytes
