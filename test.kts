@@ -44,7 +44,7 @@ fun withSjvmClient(block: (community.kotlin.markdown.api.MarkdownService) -> Uni
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params)
+                return rpcHandler.handleP2pRequest(path, params, metadata)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName
@@ -112,7 +112,7 @@ fun testPathBasedFileLookupViaSjvm() {
                 params: Map<String, Any?>,
                 metadata: Map<String, String>
             ): Any? {
-                return rpcHandler.handleP2pRequest(path, params)
+                return rpcHandler.handleP2pRequest(path, params, metadata)
             }
             override fun getImplementationJar(): ByteArray = clientJarBytes
             override fun getImplementationClassName(): String = implClassName
@@ -143,7 +143,8 @@ fun testPathBasedFileLookupViaSjvm() {
         clientResolver = UrlResolver(UrlProtocol2(bootstrapPeers = listOf(bootstrapPeer)))
         val file: community.kotlin.markdown.api.MarkdownFile = clientResolver.openSandboxedConnection(
             "url://markdown/baby-sleep.md",
-            community.kotlin.markdown.api.MarkdownFile::class
+            community.kotlin.markdown.api.MarkdownFile::class,
+            mapOf("resourcePath" to "baby-sleep.md")
         )
 
         assertEquals("baby-sleep.md", file.name, "File name should be 'baby-sleep.md'")
