@@ -118,11 +118,6 @@ fun testPathBasedFileLookupViaSjvm() {
             override fun getImplementationClassName(): String = implClassName
             override fun getStdlibJar(): ByteArray? = stdlibJarBytes
             override fun supportsSandboxedExecution(): Boolean = true
-            override fun resolveInitParams(resourcePath: String?): Map<String, String>? {
-                if (resourcePath == null) return null
-                val file = service.getFileByName(resourcePath) ?: return null
-                return mapOf("id" to file.id.toString())
-            }
             override fun onShutdown() {}
         }
 
